@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Plant Classification Model Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        line-height: 1.6;
+      }
+      .main-title {
+        font-size: 36px;
+        color: #4caf50;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 10px;
+      }
+      .sub-title {
+        font-size: 20px;
+        color: #555;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .upload-container {
+        border: 2px dashed #ccc;
+        padding: 30px;
+        text-align: center;
+        margin-bottom: 20px;
+        border-radius: 5px;
+      }
+      .result-container {
+        margin-top: 30px;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        display: none;
+      }
+      .prediction-result {
+        text-align: center;
+        margin: 20px 0;
+      }
+      .prediction-name {
+        font-size: 28px;
+        color: #4caf50;
+        font-weight: bold;
+      }
+      .image-preview {
+        max-width: 100%;
+        margin: 20px 0;
+      }
+      .progress-bar {
+        height: 20px;
+        background-color: #f1f1f1;
+        border-radius: 10px;
+        margin: 10px 0;
+        overflow: hidden;
+      }
+      .progress {
+        height: 100%;
+        background-color: #4caf50;
+        width: 0%;
+        transition: width 0.3s;
+      }
+      .error-message {
+        color: #f44336;
+        margin: 20px 0;
+        padding: 10px;
+        background-color: #ffebee;
+        border-radius: 5px;
+      }
+      .debug-info {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #f5f5f5;
+        border-radius: 5px;
+      }
+      .columns {
+        display: flex;
+        gap: 20px;
+      }
+      .column {
+        flex: 1;
+      }
+      button {
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 10px 0;
+        cursor: pointer;
+        border-radius: 5px;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 class="main-title">Plant Classification Model Test</h1>
+
+    <div class="upload-container">
+      <h2>Upload an image of the plant:</h2>
+      <input
+        type="file"
+        id="fileInput"
+        accept="image/jpeg,image/png,image/jpg"
+      />
+      <button id="uploadButton">Upload & Predict</button>
+    </div>
+
+    <div id="errorContainer" class="error-message" style="display: none"></div>
+
+    <div id="resultContainer" class="result-container">
+      <div class="columns">
+        <div class="column">
+          <h3>Uploaded Image</h3>
+          <img
+            id="imagePreview"
+            class="image-preview"
+            src=""
+            alt="Uploaded Image"
+          />
+        </div>
+        <div class="column">
+          <div id="predictionResult" class="prediction-result">
+            <h2>Prediction Result</h2>
+            <div id="predictionName" class="prediction-name"></div>
+            <div id="predictionConfidence"></div>
+          </div>
+
+          <h3>Top 3 predictions:</h3>
+          <div id="topPredictions"></div>
+        </div>
+      </div>
+
+      <div id="debugInfo" class="debug-info" style="display: none">
+        <h3>Validation Details</h3>
+        <div id="validationDetails"></div>
+      </div>
+    </div>
+
+    <script>
+      document
+        .getElementById("uploadButton")
+        .addEventListener("click", function () {
+          const fileInput = document.getElementById("fileInput");
+          const file = fileInput.files[0];
+
+          if (!file) {
+            showError("Please select a file first");
+            return;
+          }
+
+          const formData = new FormData();
+          formData.append("file", file);
+
+          // Clear previous results
+          document.getElementById("errorContainer").style.display = "none";
+          document.getElementById("resultContainer").style.display = "none";
+
+          // Show loading state
+          const button = this;
+          button.disabled = true;
+          button.textContent = "Processing...";
+
+          fetch("/predict", {
+            method: "POST",
+            body: formData,
+          })
+            .then((response) => {
+              if (!response.ok) {
+                return response.json().then((err) => {
+                  throw err;
+                });
+              }
+              return response.json();
+            })
+            .then((data) => {
+              // Display the image
+              const preview = document.getElementById("imagePreview");
+              preview.src = URL.createObjectURL(file);
+
+              // Display prediction results
+              document.getElementById("predictionName").textContent =
+                data.prediction;
+              document.getElementById(
+                "predictionConfidence"
+              ).textContent = `Confidence: ${(data.confidence * 100).toFixed(
+                2
+              )}%`;
+
+              // Display top predictions
+              const topPredictionsDiv =
+                document.getElementById("topPredictions");
+              topPredictionsDiv.innerHTML = "";
+              data.top_predictions.forEach((pred) => {
+                const predDiv = document.createElement("div");
+                predDiv.innerHTML = `
+                        <div>${pred.class}</div>
+                        <div class="progress-bar">
+                            <div class="progress" style="width: ${
+                              pred.confidence * 100
+                            }%"></div>
+                        </div>
+                        <div>${(pred.confidence * 100).toFixed(2)}%</div>
+                        <br>
+                    `;
+                topPredictionsDiv.appendChild(predDiv);
+              });
+
+              // Show results
+              document.getElementById("resultContainer").style.display =
+                "block";
+            })
+            .catch((error) => {
+              let errorMessage = "An error occurred";
+              if (error.error) {
+                errorMessage = error.error;
+                if (error.details) {
+                  errorMessage += `<br><small>${JSON.stringify(
+                    error.details
+                  )}</small>`;
+                }
+              }
+              showError(errorMessage);
+            })
+            .finally(() => {
+              button.disabled = false;
+              button.textContent = "Upload & Predict";
+            });
+        });
+
+      function showError(message) {
+        const errorContainer = document.getElementById("errorContainer");
+        errorContainer.innerHTML = message;
+        errorContainer.style.display = "block";
+      }
+    </script>
+  </body>
+</html>
