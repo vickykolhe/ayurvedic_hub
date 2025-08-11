@@ -15,4 +15,4 @@ Image Processing: OpenCV, Pillow
 Python Version: 3.7+
 
 # Result 
-![image](https://github.com/user-attachments/assets/dd387259-42b4-42aa-8590-39aac447f50c)
+![image]([https://github.com/user-attachments/assets/dd387259-42b4-42aa-8590-39aac447f50c](https://github.com/vickykolhe/ayurvedic_hub/blob/main/388686971-dd387259-42b4-42aa-8590-39aac447f50c.png))
