@@ -9,7 +9,7 @@ Streamlit Integration: Runs seamlessly in a web browser.
 TensorFlow Support: Uses a .h5 or .keras TensorFlow model for predictions.
 
 # 🛠️ Technologies Used
-Frontend Framework: Streamlit
+Frontend Framework: HTML/CSS
 Deep Learning Framework: TensorFlow
 Image Processing: OpenCV, Pillow
 Python Version: 3.7+
